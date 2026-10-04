@@ -19,7 +19,7 @@ Fresh world every time physics change.
 | M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | code complete (PR #5), in-game checklist pending |
 | M4a | Block registry | One block type, place works, persists as ZDO | code complete (PR #6), in-game checklist pending |
 | M4b | Block set | 9 starter blocks, placement validation, drops | code complete (PR #7), in-game checklist pending |
-| M5 | Steve model | 3D Steve replaces player model, facing + animation | not started |
+| M5 | Steve model | 3D Steve replaces player model, facing + animation | code complete (PR #8), in-game checklist pending |
 | M6 | HUD | Crosshair, hearts, 9-slot hotbar | not started |
 
 ---
@@ -156,3 +156,18 @@ Acceptance checklist (fresh world):
 - [ ] Placing consumes 1 item
 - [ ] Re-log: placed blocks persist (ZDO)
 - [ ] Mining a placed stone block drops Minecraft Stone (M3b conversion)
+
+## M5 - Steve model
+
+Branch: `m5-steve` (PR #8). Code complete.
+
+- `src/Steve/SteveModel.cs` - 6-box rig (DESIGN.md #14), camera-yaw facing (DESIGN.md #16), attach/detach, armor hide (DESIGN.md #17)
+- `src/Steve/SteveAnimator.cs` - 8 keyframed states (DESIGN.md #15)
+- `src/Steve/SteveRenderer.cs` - boxes plus procedural 16x16 face (CC0 by construction)
+
+Acceptance checklist (fresh world):
+
+- [ ] Toggling Mineheim mode on swaps the Valheim model for blocky Steve
+- [ ] Steve faces the camera direction (full 360, no flip)
+- [ ] Limbs swing while walking; arms raise for mining and attacking
+- [ ] Valheim armor hidden while Steve is active, restored on toggle-off
