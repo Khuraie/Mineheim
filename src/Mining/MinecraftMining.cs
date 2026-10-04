@@ -52,12 +52,91 @@ namespace Mineheim
     /// DESIGN.md). Decide whether to suppress that in Mineheim mode so hardness timing
     /// is pure.
     /// </summary>
+    /// <summary>
+    /// Anything M3 mining can break: Destructible props, MineRock/MineRock5 deposits,
+    /// and TreeLog trunks. Rocks and trees are NOT Destructibles (verified against
+    /// assembly_valheim 1.0.16: MineRock, MineRock5 and TreeLog derive straight from
+    /// MonoBehaviour), so a mine target limited to Destructible misses most of the world.
+    /// </summary>
+    internal sealed class MineTarget
+    {
+        private readonly Component _component;
+        private readonly Destructible _destructible;
+        private readonly string _dropField; // rock/tree DropTable field, null for Destructible
+
+        public string Name => _component.name;
+
+        private MineTarget(Component component, Destructible destructible, string dropField)
+        {
+            _component = component;
+            _destructible = destructible;
+            _dropField = dropField;
+        }
+
+        public static MineTarget FromHit(RaycastHit hit)
+        {
+            if (hit.collider == null)
+            {
+                return null;
+            }
+            var destructible = hit.collider.GetComponentInParent<Destructible>();
+            if (destructible != null)
+            {
+                return new MineTarget(destructible, destructible, null);
+            }
+            Component rock = hit.collider.GetComponentInParent<MineRock>() as Component
+                ?? hit.collider.GetComponentInParent<MineRock5>() as Component
+                ?? hit.collider.GetComponentInParent<TreeLog>() as Component
+                ?? hit.collider.GetComponentInParent<TreeBase>() as Component;
+            if (rock == null)
+            {
+                return null;
+            }
+            string typeName = rock.GetType().Name;
+            string dropField = typeName == "TreeLog" || typeName == "TreeBase" ? "m_dropWhenDestroyed" : "m_dropItems";
+            return new MineTarget(rock, null, dropField);
+        }
+
+        public bool SameAs(MineTarget other)
+        {
+            return other != null && other._component == _component;
+        }
+
+        public float Health =>
+            Traverse.Create(_component).Field("m_health").GetValue<float>();
+
+        public void Damage(HitData hit)
+        {
+            if (_destructible != null)
+            {
+                _destructible.Damage(hit);
+                return;
+            }
+            // MineRock/MineRock5/TreeLog all expose public Damage(HitData).
+            _component.SendMessage("Damage", hit, SendMessageOptions.DontRequireReceiver);
+        }
+
+        public void SuppressDrop()
+        {
+            if (_destructible != null)
+            {
+                MinecraftDrops.SuppressVanillaDrop(_destructible);
+                return;
+            }
+            // Rocks and trees spawn their Destroy loot from a DropTable field; swap in an
+            // empty table so nothing spawns. The object is destroyed right after, so the
+            // swap is never restored (restoring before a deferred destroy RPC lands would
+            // re-enable the vanilla drop).
+            Traverse.Create(_component).Field(_dropField).SetValue(new DropTable());
+        }
+    }
+
     public static class MinecraftMining
     {
         private const float TicksPerSecond = 20f; // Minecraft tick rate (PROTOCOL.md)
         private const string MineButton = "Attack";
 
-        private static Destructible _target;
+        private static MineTarget _target;
         private static float _progress;
 
         public static void Tick(Player player, float dt)
@@ -68,20 +147,20 @@ namespace Mineheim
                 return;
             }
 
-            var destructible = hit.collider.GetComponentInParent<Destructible>();
-            if (destructible == null)
+            var target = MineTarget.FromHit(hit);
+            if (target == null)
             {
                 Reset();
                 return;
             }
 
-            if (destructible != _target)
+            if (!target.SameAs(_target))
             {
-                _target = destructible;
+                _target = target;
                 _progress = 0f;
             }
 
-            string prefabName = destructible.name;
+            string prefabName = target.Name;
             int tier = ToolTiers.CurrentTier(player);
             BlockClass blockClass = ValheimToMinecraftDrop.Classify(prefabName);
             int requiredTier = ValheimToMinecraftDrop.RequiredTier(prefabName);
@@ -90,24 +169,24 @@ namespace Mineheim
             {
                 // Ore-class below tier: the block does not break (PROTOCOL.md). Progress
                 // tops out at 1 and waits for a better tool.
-                _progress = Mathf.Min(1f, _progress + SpeedPerSecond(tier, destructible) * dt);
+                _progress = Mathf.Min(1f, _progress + SpeedPerSecond(tier, prefabName) * dt);
                 RaiseTick(player, hit, tier);
                 return;
             }
 
-            _progress += SpeedPerSecond(tier, destructible) * dt;
+            _progress += SpeedPerSecond(tier, prefabName) * dt;
             RaiseTick(player, hit, tier);
 
             if (_progress >= 1f)
             {
-                Break(player, destructible, hit, tier, blockClass, requiredTier);
+                Break(player, target, hit, tier, blockClass, requiredTier);
                 Reset();
             }
         }
 
-        private static float SpeedPerSecond(int tier, Destructible destructible)
+        private static float SpeedPerSecond(int tier, string prefabName)
         {
-            return ToolTiers.SpeedForTier(tier) / BlockHardness.For(destructible) * TicksPerSecond;
+            return ToolTiers.SpeedForTier(tier) / BlockHardness.For(prefabName) * TicksPerSecond;
         }
 
         private static void RaiseTick(Player player, RaycastHit hit, int tier)
@@ -122,36 +201,40 @@ namespace Mineheim
         }
 
         private static void Break(
-            Player player, Destructible destructible, RaycastHit hit,
+            Player player, MineTarget target, RaycastHit hit,
             int tier, BlockClass blockClass, int requiredTier)
         {
             int? drop = ToolTiers.DropAllowed(requiredTier, tier)
-                ? ValheimToMinecraftDrop.TryGetDrop(destructible.name)
+                ? ValheimToMinecraftDrop.TryGetDrop(target.Name)
                 : (int?)MinecraftItemId.None; // stone-class below tier: breaks, no drop
 
             MineheimEvents.RaiseBlockBreak(new BlockBreakEvent
             {
                 Player = player,
                 Position = hit.point,
-                ValheimPrefabName = destructible.name,
+                ValheimPrefabName = target.Name,
                 MinecraftDrop = drop,
             });
 
             if (drop != null)
             {
-                MinecraftDrops.SuppressVanillaDrop(destructible);
+                target.SuppressDrop();
             }
 
             // Break through Valheim's own pipeline so the object is removed by the game.
             // The finisher hit maxes m_toolTier so m_minToolTier never blocks the break.
+            // MineRock.Damage returns immediately when m_hitCollider is null, and
+            // MineRock5 needs a positive radius for its area query: both are set.
             var finisher = new HitData
             {
                 m_point = hit.point,
                 m_dir = hit.normal,
                 m_toolTier = short.MaxValue,
+                m_hitCollider = hit.collider,
+                m_radius = 1f,
             };
-            finisher.m_damage.m_damage = destructible.m_health + 1f;
-            destructible.Damage(finisher);
+            finisher.m_damage.m_damage = target.Health + 1f;
+            target.Damage(finisher);
         }
 
         private static void Reset()

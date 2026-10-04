@@ -16,6 +16,10 @@ namespace Mineheim
     /// - patch via Harmony, never modify Valheim DLLs.
     /// </summary>
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+    // Jotunn ModGuid verified as com.jotunn.jotunn from Jotunn 2.30.2. Soft: M1-M3
+    // work without Jotunn, but when present we must load after it so Awake-time
+    // content registration finds live managers.
+    [BepInDependency("com.jotunn.jotunn", BepInDependency.DependencyFlags.SoftDependency)]
     public class MineheimPlugin : BaseUnityPlugin
     {
         public const string PluginGuid = "com.mineheim.plugin";
@@ -37,9 +41,19 @@ namespace Mineheim
             // Subsystem wiring (PROTOCOL.md: subsystems meet at events). Drops routes break
             // events; the block registry registers M4 content through Jotunn.
             MinecraftDrops.Init();
-            BlockRegistry.Init();
             SteveManager.Init();
             MineheimHud.Init();
+            try
+            {
+                BlockRegistry.Init();
+            }
+            catch (System.Exception e)
+            {
+                // Jotunn content is optional at load: without it the M4 blocks/items are
+                // simply unavailable (drops fall back to vanilla) instead of killing the
+                // whole plugin. Movement, mining of vanilla blocks, Steve, and HUD keep working.
+                MineheimLog.Error("Block registry failed (Jotunn missing?): " + e.Message);
+            }
 
             // M1 acceptance line. Printed unfiltered so the milestone checklist always
             // sees it regardless of the configured log level.

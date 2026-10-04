@@ -1,5 +1,3 @@
-using System.Reflection;
-using HarmonyLib;
 using UnityEngine;
 
 namespace Mineheim
@@ -12,10 +10,6 @@ namespace Mineheim
     /// </summary>
     public static class MinecraftDrops
     {
-        // assembly_valheim 1.0.16 keeps Destructible.m_destroyed private.
-        private static readonly FieldInfo DestroyedField =
-            AccessTools.Field(typeof(Destructible), "m_destroyed");
-
         /// <summary>Hook from MineheimPlugin.Awake.</summary>
         public static void Init()
         {
@@ -29,11 +23,12 @@ namespace Mineheim
         /// </summary>
         public static void SuppressVanillaDrop(Destructible destructible)
         {
+            // The spawn source is cleared before the break; Destructible.Destroy skips
+            // the spawn when it is null (verified 1.0.16 IL). The private m_destroyed
+            // flag is deliberately NOT set: Destructible.RPC_Damage early-returns while
+            // it is set, so setting it before the routed destroy lands would veto the
+            // destroy itself and leave the block standing.
             destructible.m_spawnWhenDestroyed = null;
-            if (DestroyedField != null)
-            {
-                DestroyedField.SetValue(destructible, true);
-            }
         }
 
         private static void Handle(BlockBreakEvent e)
@@ -52,12 +47,12 @@ namespace Mineheim
             GameObject prefab = ZNetScene.instance.GetPrefab(prefabName);
             if (prefab == null)
             {
-                // Item lands in M4; until it exists the drop is lost rather than faked.
-                MineheimLog.Debug("No Minecraft item prefab yet: " + prefabName);
+                MineheimLog.Debug("No Minecraft item prefab: " + prefabName);
                 return;
             }
 
-            Object.Instantiate(prefab, e.Position + Vector3.up * 0.3f, Quaternion.identity);
+            // Prefabs are built inactive so their Awake waits for the world (BlockRegistry).
+            ((GameObject)Object.Instantiate(prefab, e.Position + Vector3.up * 0.3f, Quaternion.identity)).SetActive(true);
         }
     }
 }

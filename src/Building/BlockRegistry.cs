@@ -65,8 +65,12 @@ namespace Mineheim
         public static GameObject BuildBlockPrefab(string prefabName, string display, Color32 baseColor, Color32 fleck)
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            // Inactive at build time: component Awake (ZNetView creates a ZDO on Awake and
+            // self-destroys outside a world) must wait for the world spawn.
+            go.SetActive(false);
             go.name = prefabName;
-            go.GetComponent<MeshRenderer>().sharedMaterial = BuildMaterial(baseColor, fleck);
+            // Reuse the primitive's own pipeline-valid material instead of Shader.Find.
+            go.GetComponent<MeshRenderer>().material.mainTexture = BuildTexture(baseColor, fleck);
 
             ZNetView view = go.AddComponent<ZNetView>();
             view.m_persistent = true; // DESIGN.md #12: placed blocks persist as ZDOs
@@ -85,8 +89,13 @@ namespace Mineheim
         public static GameObject BuildItemPrefab(string prefabName, string display, string description, Color32 baseColor, Color32 fleck)
         {
             GameObject go = new GameObject(prefabName);
+            // Inactive at build time (see BuildBlockPrefab): ItemDrop/ZNetView Awake needs
+            // a live world with ObjectDB and ZDOMan.
+            go.SetActive(false);
             var itemDrop = go.AddComponent<ItemDrop>();
             itemDrop.m_itemData = new ItemDrop.ItemData();
+            // ItemData's ctor leaves m_shared null; without this the next line NREs at Awake.
+            itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData();
             itemDrop.m_itemData.m_shared.m_name = display;
             itemDrop.m_itemData.m_shared.m_description = description;
             itemDrop.m_itemData.m_shared.m_maxStackSize = 64; // Minecraft stack size
@@ -95,6 +104,9 @@ namespace Mineheim
 
             go.AddComponent<Rigidbody>().useGravity = true;
             go.AddComponent<BoxCollider>().size = new Vector3(0.25f, 0.25f, 0.25f);
+
+            // Like every vanilla ItemDrop: a persistent ZDO so drops survive save/load.
+            go.AddComponent<ZNetView>().m_persistent = true;
 
             return go;
         }
@@ -105,18 +117,6 @@ namespace Mineheim
             return Sprite.Create(tex, new Rect(0f, 0f, 16f, 16f), new Vector2(0.5f, 0.5f), 16f);
         }
 
-        private static Material BuildMaterial(Color32 baseColor, Color32 fleck)
-        {
-            // TODO(spec): confirm which shader survives Valheim's pipeline across GPUs.
-            Shader shader =
-                Shader.Find("Universal Render Pipeline/Simple Lit")
-                ?? Shader.Find("Standard")
-                ?? Shader.Find("Diffuse")
-                ?? Shader.Find("Unlit/Texture");
-            var mat = new Material(shader);
-            mat.mainTexture = BuildTexture(baseColor, fleck);
-            return mat;
-        }
 
         /// <summary>Our own 16x16 pixel art: base with deterministic flecks (Minecraft style).</summary>
         private static Texture2D BuildTexture(Color32 baseColor, Color32 fleck)

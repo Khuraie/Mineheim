@@ -29,15 +29,59 @@ namespace Mineheim
             return pivot;
         }
 
+        private static Shader _baseShader;
+        private static bool _baseShaderResolved;
+        private static Material _skinMat;
+        private static Material _shirtMat;
+        private static Material _pantsMat;
+        private static Material _faceMat;
+        private static Texture2D _faceTex;
+
+        public static bool HasBaseShader => _baseShaderResolved;
+
+        /// <summary>Clone the player's own valid shader once; Steve boxes inherit a pipeline-valid base.</summary>
+        public static void SetBaseShader(Shader shader)
+        {
+            if (_baseShaderResolved)
+            {
+                return;
+            }
+            _baseShader = shader;
+            _baseShaderResolved = true;
+        }
+
         public static Material Flat(Color32 color)
         {
-            // TODO(spec): confirm which shader survives Valheim's pipeline across GPUs.
-            Shader shader = Shader.Find("Universal Render Pipeline/Simple Lit")
-                ?? Shader.Find("Standard")
-                ?? Shader.Find("Diffuse");
-            var mat = new Material(shader);
+            // One cached material per fixed palette color. Uses the player's own valid
+            // shader when available; falls back to a primitive copy only if none found.
+            if (color.Equals(Shirt)) return _shirtMat ?? (_shirtMat = Opaque(color));
+            if (color.Equals(Pants)) return _pantsMat ?? (_pantsMat = Opaque(color));
+            return _skinMat ?? (_skinMat = Opaque(Skin));
+        }
+
+        private static Material Opaque(Color32 color)
+        {
+            Material mat = _baseShader != null ? new Material(_baseShader) : CopyPrimitiveMaterial();
             mat.color = color;
             return mat;
+        }
+
+        private static Material CopyPrimitiveMaterial()
+        {
+            var tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var mat = tmp.GetComponent<MeshRenderer>().material;
+            Object.Destroy(tmp);
+            return mat;
+        }
+
+        public static Material FaceMaterial(Texture2D tex)
+        {
+            if (_faceMat == null)
+            {
+                _faceMat = _baseShader != null ? new Material(_baseShader) : CopyPrimitiveMaterial();
+            }
+            _faceMat.mainTexture = tex;
+            return _faceMat;
         }
 
         /// <summary>
@@ -50,7 +94,11 @@ namespace Mineheim
             Object.Destroy(plate.GetComponent<Collider>());
             plate.name = "FacePlate";
             plate.transform.localScale = new Vector3(0.4f, 0.25f, 0.02f);
-            var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            if (_faceTex == null)
+            {
+                _faceTex = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            }
+            var tex = _faceTex;
             for (int y = 0; y < 16; y++)
             {
                 for (int x = 0; x < 16; x++)
@@ -66,8 +114,7 @@ namespace Mineheim
             // Mouth.
             for (int x = 6; x <= 9; x++) { tex.SetPixel(x, 4, new Color32(120, 70, 60, 255)); }
             tex.Apply();
-            plate.GetComponent<MeshRenderer>().material = new Material(plate.GetComponent<MeshRenderer>().material.shader);
-            plate.GetComponent<MeshRenderer>().material.mainTexture = tex;
+            plate.GetComponent<MeshRenderer>().material = FaceMaterial(tex);
             return plate;
         }
     }

@@ -18,6 +18,11 @@ namespace Mineheim
 
         public static bool Raycast(Player player, float reach, out RaycastHit hit)
         {
+            if (GameCamera.instance == null)
+            {
+                hit = new RaycastHit();
+                return false;
+            }
             var origin = player.GetEyePoint();
             var dir = GetAim(player);
             return Physics.Raycast(origin, dir, out hit, reach);
