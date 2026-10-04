@@ -16,7 +16,7 @@ Fresh world every time physics change.
 | M2a | Movement core | Walk, jump, gravity, ground detection, no clipping | code complete (PR #2), in-game checklist pending |
 | M2b | Movement polish | Sprint, air control, water, fall damage | code complete (PR #3), in-game checklist pending |
 | M3a | Mining core | Raycast, hardness, tool speed, vanilla drops | code complete (PR #4), in-game checklist pending |
-| M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | not started |
+| M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | code complete (PR #5), in-game checklist pending |
 | M4a | Block registry | One block type, place works, persists as ZDO | not started |
 | M4b | Block set | 9 starter blocks, placement validation, drops | not started |
 | M5 | Steve model | 3D Steve replaces player model, facing + animation | not started |
@@ -111,3 +111,18 @@ Acceptance checklist (fresh world):
 - [ ] Breaking drops the usual Valheim loot (vanilla drops, no conversion yet)
 - [ ] Trees and ore take measurably longer than loose rock (hardness)
 - [ ] Looking away or releasing attack resets progress
+
+## M3b - Drop conversion
+
+Branch: `m3b-drop-conversion` (PR #5). Code complete.
+
+- `src/Mining/ValheimToMinecraftDrop.cs` - PROTOCOL.md drop table (12 ids); unmapped prefabs, custom destructibles (altars/chests/portals), and hardmode resources fall back to vanilla (DESIGN.md #9)
+- `src/Mining/ToolTiers.cs` - Hand..Netherite ladder; `CanBreak` (ore below tier: no break) and `DropAllowed` (stone below tier: break, no drop)
+- `src/Mining/MinecraftDrops.cs` - `OnBlockBreak` subscriber; vanilla drop suppressed via `Destructible.m_destroyed` handling, Minecraft item spawned from the routed id
+
+Acceptance checklist (fresh world):
+
+- [ ] Mine copper ore with hand: does not break (ore below tier)
+- [ ] Mine stone with hand: breaks, no drop; with a tool: drops Minecraft Stone (once M4 items exist)
+- [ ] Mine an unmapped destructible: vanilla Valheim drop
+- [ ] Chests, altars, portals always keep vanilla behavior
