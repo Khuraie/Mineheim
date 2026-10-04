@@ -16,6 +16,10 @@ namespace Mineheim
     /// - patch via Harmony, never modify Valheim DLLs.
     /// </summary>
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+    // Jotunn ModGuid verified as com.jotunn.jotunn from Jotunn 2.30.2. Soft: M1-M3
+    // work without Jotunn, but when present we must load after it so Awake-time
+    // content registration finds live managers.
+    [BepInDependency("com.jotunn.jotunn", BepInDependency.DependencyFlags.SoftDependency)]
     public class MineheimPlugin : BaseUnityPlugin
     {
         public const string PluginGuid = "com.mineheim.plugin";

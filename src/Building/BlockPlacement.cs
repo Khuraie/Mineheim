@@ -95,7 +95,10 @@ namespace Mineheim
             {
                 return false;
             }
-            if (Physics.OverlapSphere(position, 0.35f).Length > 0)
+            // Only the cell core blocks placement: small flora and debris clipping the cell
+            // edges is tolerated, while solid walls and stacked blocks still occupy the core.
+            // The player/creature capsule check below stays the wide one.
+            if (Physics.OverlapSphere(position, 0.15f).Length > 0)
             {
                 return false;
             }

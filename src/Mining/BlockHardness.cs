@@ -17,9 +17,9 @@ namespace Mineheim
         public const float DefaultHardness = 30f;
 
         // Minecraft hardness x 30: stone 1.5 -> 45, ores 3.0 -> 90, wood 2.0 -> 60.
-        public static float For(Destructible destructible)
+        public static float For(string prefabName)
         {
-            string name = destructible.name.ToLowerInvariant();
+            string name = (prefabName ?? string.Empty).ToLowerInvariant();
             if (name.Contains("rock") || name.Contains("stone") || name.Contains("flint"))
             {
                 return 45f;
