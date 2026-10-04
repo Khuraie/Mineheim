@@ -13,8 +13,8 @@ Fresh world every time physics change.
 | # | Milestone | Outcome | Status |
 |---|-----------|---------|--------|
 | M1 | Plugin loads | BepInEx loads Mineheim, F5 toggles mode, log works | code complete, in-game checklist pending |
-| M2a | Movement core | Walk, jump, gravity, ground detection, no clipping | not started |
-| M2b | Movement polish | Sprint, air control, water, fall damage | not started |
+| M2a | Movement core | Walk, jump, gravity, ground detection, no clipping | code complete (PR #2), in-game checklist pending |
+| M2b | Movement polish | Sprint, air control, water, fall damage | code complete (PR #3), in-game checklist pending |
 | M3a | Mining core | Raycast, hardness, tool speed, vanilla drops | not started |
 | M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | not started |
 | M4a | Block registry | One block type, place works, persists as ZDO | not started |
@@ -65,15 +65,33 @@ Notes:
 - The four unchecked items need a human at the keyboard; record results here
   before the PR is merged.
 
-## M2a - Movement core (not started)
+## M2a - Movement core
 
-Outcome: walk, jump, gravity, ground detection, no clipping. Acceptance
-checklist is defined when the milestone starts.
+Branch: `m2a-movement-core` (PR #2). Code complete.
 
-Planned hooks (PROTOCOL.md "Movement contract", "Physics constants"):
+- `src/Player/MinecraftPhysics.cs` - PROTOCOL.md constants, scaled from 20 Hz tick units to per-second rigidbody units
+- `src/Player/MinecraftMovement.cs` - `Player.Update` postfix writes `m_body.velocity` only (Harmony field ref; the field is private in assembly_valheim 1.0.16). Never `transform.position`
+- Ground detection via `Character.IsOnGround()`; walk 4.317 m/s, jump 8.4 m/s, gravity 32 m/s^2 clamped at 78.4 m/s terminal
 
-- `Player.Update` Harmony postfix writes `m_body.velocity` only - never
-  `transform.position`
-- `MinecraftPhysics` constants scaled from Minecraft's 20 Hz ticks to
-  Valheim's 50 Hz
-- Ground detection via `Character.IsOnGround()`
+Acceptance checklist (fresh world):
+
+- [ ] Walk at Minecraft speed; diagonals capped to walk speed
+- [ ] Jump reaches about 1.2 m (Minecraft 1.25 blocks)
+- [ ] Gravity feels Minecraft-fast; terminal velocity on long falls
+- [ ] No clipping through terrain or pieces
+
+## M2b - Movement polish
+
+Branch: `m2b-movement-polish` (PR #3). Code complete.
+
+- Sprint: Valheim's "Run" action at 5.612 m/s (action name verified in assembly_valheim 1.0.16)
+- Air control: weak steering toward wish speed; momentum kept without input
+- Water: `Character.IsSwimming()` gate - slower move, jump rises, gentle capped sink; entering water cancels fall damage
+- Fall damage: Minecraft's formula (fallDistance - 3) replaces Valheim's percentage formula; suppressed via a `Character.Damage` prefix on `m_hitType == 3` fall hits and re-applied through Valheim's own pipeline. Lands on Valheim HP per DESIGN.md #7
+
+Acceptance checklist (fresh world):
+
+- [ ] Sprint is visibly faster than walk
+- [ ] Air steering is weak but present; falling keeps momentum
+- [ ] Water: rise with jump, sink slowly otherwise, slower horizontal speed
+- [ ] Fall 5 m: no damage; fall 10 m: 7 damage; land in water: no damage
