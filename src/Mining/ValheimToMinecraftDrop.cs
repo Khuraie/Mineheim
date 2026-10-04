@@ -111,24 +111,20 @@ namespace Mineheim
                 return drop;
             }
 
-            // Prefab-name fallbacks for named destructibles (rock1, ancient tree, ...).
+            // Prefab-name fallbacks, specific first. This also maps placed Mineheim
+            // blocks (MinecraftStoneBlock, ...) back to their items so M4b blocks drop
+            // when mined.
             string lower = name.ToLowerInvariant();
-            if (lower.Contains("rock") || lower.Contains("flint"))
-            {
-                return lower.Contains("flint") ? MinecraftItemId.Flint : MinecraftItemId.Stone;
-            }
-            if (lower.Contains("copper"))
-            {
-                return MinecraftItemId.CopperOre;
-            }
-            if (lower.Contains("tin") || lower.Contains("iron"))
-            {
-                return MinecraftItemId.IronOre;
-            }
-            if (lower.Contains("obsidian"))
-            {
-                return MinecraftItemId.Obsidian;
-            }
+            if (lower.Contains("flint")) return MinecraftItemId.Flint;
+            if (lower.Contains("diamond")) return MinecraftItemId.DiamondOre;
+            if (lower.Contains("gold")) return MinecraftItemId.GoldOre;
+            if (lower.Contains("copper")) return MinecraftItemId.CopperOre;
+            if (lower.Contains("tin") || lower.Contains("iron")) return MinecraftItemId.IronOre;
+            if (lower.Contains("obsidian")) return MinecraftItemId.Obsidian;
+            if (lower.Contains("planks")) return MinecraftItemId.OakPlanks;
+            if (lower.Contains("log")) return MinecraftItemId.OakLog;
+            if (lower.Contains("stone") || lower.Contains("rock")) return MinecraftItemId.Stone;
+            if (lower.Contains("dirt") || lower.Contains("grass")) return MinecraftItemId.Dirt;
             return null;
         }
 

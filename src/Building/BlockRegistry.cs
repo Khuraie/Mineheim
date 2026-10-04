@@ -19,11 +19,30 @@ namespace Mineheim
         /// <summary>Item display name -> block prefab name, used by BlockPlacement.</summary>
         public static readonly Dictionary<string, string> ItemNameToBlockPrefab = new Dictionary<string, string>();
 
-        /// <summary>Hook from MineheimPlugin.Awake (M4a: one block; M4b: the starter set).</summary>
+        /// <summary>Hook from MineheimPlugin.Awake (M4b: the 9-block starter set + items).</summary>
         public static void Init()
         {
+            RegisterBlock(MinecraftDirtBlock.Create());
+            RegisterBlock(MinecraftOakLogBlock.Create());
+            RegisterBlock(MinecraftOakPlanksBlock.Create());
+            RegisterBlock(MinecraftCopperOreBlock.Create());
+            RegisterBlock(MinecraftIronOreBlock.Create());
+            RegisterBlock(MinecraftGoldOreBlock.Create());
+            RegisterBlock(MinecraftDiamondOreBlock.Create());
+            RegisterBlock(MinecraftObsidianBlock.Create());
             RegisterBlock(MinecraftStoneBlock.Create());
             RegisterItem(MinecraftStoneItem.Create(), MinecraftStoneBlock.PrefabName);
+            RegisterItem(MinecraftDirtItem.Create(), MinecraftDirtBlock.PrefabName);
+            RegisterItem(MinecraftOakLogItem.Create(), MinecraftOakLogBlock.PrefabName);
+            RegisterItem(MinecraftOakPlanksItem.Create(), MinecraftOakPlanksBlock.PrefabName);
+            RegisterItem(MinecraftCopperOreItem.Create(), MinecraftCopperOreBlock.PrefabName);
+            RegisterItem(MinecraftIronOreItem.Create(), MinecraftIronOreBlock.PrefabName);
+            RegisterItem(MinecraftGoldOreItem.Create(), MinecraftGoldOreBlock.PrefabName);
+            RegisterItem(MinecraftDiamondOreItem.Create(), MinecraftDiamondOreBlock.PrefabName);
+            RegisterItem(MinecraftObsidianItem.Create(), MinecraftObsidianBlock.PrefabName);
+            RegisterItem(MinecraftDarkOakLogItem.Create(), null);
+            RegisterItem(MinecraftFlintItem.Create(), null);
+            RegisterItem(MinecraftLeatherItem.Create(), null);
         }
 
         public static void RegisterBlock(GameObject prefab)

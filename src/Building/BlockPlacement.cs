@@ -20,7 +20,7 @@ namespace Mineheim
     ///
     /// TODO(spec): the place button is Valheim's "Use" action; Minecraft players expect
     /// right mouse. ZInput actions rebind, but pick a final binding after playtesting.
-    /// The 5-rule CanPlaceAt validation lands in M4b.
+    /// Placement is validated by the 5-rule CanPlaceAt below.
     /// </summary>
     public static class BlockPlacement
     {
@@ -61,6 +61,11 @@ namespace Mineheim
 
             Vector3 normal = hit.normal;
             Vector3 position = Snap(hit.point + normal * 0.5f);
+            if (!CanPlaceAt(player, position))
+            {
+                MineheimLog.Debug("Placement refused at " + position);
+                return;
+            }
 
             inventory.RemoveItem(consume, 1);
             Object.Instantiate(prefab, position, Quaternion.identity);
@@ -73,6 +78,51 @@ namespace Mineheim
                 ItemType = BlockItemId(blockPrefabName),
                 HotbarSlot = slot,
             });
+        }
+
+        /// <summary>
+        /// A Minecraft block may be placed at Position only if (PROTOCOL.md "Placement rules"):
+        /// 1. In world bounds. 2. No existing ZDO at that position. 3. Adjacent to terrain
+        /// or another placed block. 4. Does not intersect the player capsule. 5. Does not
+        /// intersect any active character or creature. Rules 4 and 5 share one check since
+        /// the player is a Character too. Rule 2 is approximated by colliders - ZDOs
+        /// without colliders are invisible to it (TODO(spec)).
+        /// </summary>
+        public static bool CanPlaceAt(Player player, Vector3 position)
+        {
+            if (Mathf.Abs(position.x) > 10000f || Mathf.Abs(position.z) > 10000f)
+            {
+                return false;
+            }
+            if (Physics.OverlapSphere(position, 0.35f).Length > 0)
+            {
+                return false;
+            }
+            bool supported = Physics.Raycast(position, Vector3.down, 1.0f);
+            if (!supported)
+            {
+                Vector3[] neighbors = { Vector3.up, Vector3.left, Vector3.right, Vector3.forward, Vector3.back };
+                foreach (var offset in neighbors)
+                {
+                    if (Physics.CheckSphere(position + offset, 0.25f))
+                    {
+                        supported = true;
+                        break;
+                    }
+                }
+            }
+            if (!supported)
+            {
+                return false;
+            }
+            foreach (var collider in Physics.OverlapSphere(position, 0.4f))
+            {
+                if (collider.GetComponentInParent<Character>() != null)
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>Minecraft blocks snap to the 1 m grid (cell centers at .5).</summary>
@@ -89,6 +139,14 @@ namespace Mineheim
             switch (blockPrefabName)
             {
                 case MinecraftStoneBlock.PrefabName: return MinecraftItemId.Stone;
+                case MinecraftDirtBlock.PrefabName: return MinecraftItemId.Dirt;
+                case MinecraftOakLogBlock.PrefabName: return MinecraftItemId.OakLog;
+                case MinecraftOakPlanksBlock.PrefabName: return MinecraftItemId.OakPlanks;
+                case MinecraftCopperOreBlock.PrefabName: return MinecraftItemId.CopperOre;
+                case MinecraftIronOreBlock.PrefabName: return MinecraftItemId.IronOre;
+                case MinecraftGoldOreBlock.PrefabName: return MinecraftItemId.GoldOre;
+                case MinecraftDiamondOreBlock.PrefabName: return MinecraftItemId.DiamondOre;
+                case MinecraftObsidianBlock.PrefabName: return MinecraftItemId.Obsidian;
                 default: return MinecraftItemId.None;
             }
         }
