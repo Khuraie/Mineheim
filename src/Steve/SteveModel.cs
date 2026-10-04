@@ -157,6 +157,10 @@ namespace Mineheim
             {
                 return SteveState.Mine;
             }
+            if (player.IsSwimming())
+            {
+                return SteveState.Walk; // no swim pose in v0.1.0; avoids the arms-up Fall pose
+            }
             if (!player.IsOnGround())
             {
                 return player.GetVelocity().y > 1f ? SteveState.Jump : SteveState.Fall;

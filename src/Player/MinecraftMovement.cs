@@ -108,6 +108,10 @@ namespace Mineheim
         /// </summary>
         private static Vector3 WishDirection()
         {
+            if (GameCamera.instance == null)
+            {
+                return Vector3.zero;
+            }
             Transform cam = GameCamera.instance.transform;
             Vector3 forward = cam.forward;
             forward.y = 0f;

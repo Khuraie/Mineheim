@@ -152,6 +152,7 @@ namespace Mineheim
             };
             finisher.m_damage.m_damage = destructible.m_health + 1f;
             destructible.Damage(finisher);
+            MinecraftDrops.MarkDestroyed(destructible);
         }
 
         private static void Reset()

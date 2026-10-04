@@ -68,7 +68,8 @@ namespace Mineheim
             }
 
             inventory.RemoveItem(consume, 1);
-            Object.Instantiate(prefab, position, Quaternion.identity);
+            // Prefabs are built inactive so their Awake waits for the world (BlockRegistry).
+            ((GameObject)Object.Instantiate(prefab, position, Quaternion.identity)).SetActive(true);
 
             MineheimEvents.RaisePlaceBlock(new PlaceBlockEvent
             {
@@ -104,7 +105,8 @@ namespace Mineheim
                 Vector3[] neighbors = { Vector3.up, Vector3.left, Vector3.right, Vector3.forward, Vector3.back };
                 foreach (var offset in neighbors)
                 {
-                    if (Physics.CheckSphere(position + offset, 0.25f))
+                    // 0.6 m reaches the neighboring cell's near face (0.5 m away).
+                    if (Physics.CheckSphere(position + offset, 0.6f))
                     {
                         supported = true;
                         break;

@@ -187,3 +187,7 @@ Acceptance checklist (fresh world):
 - [ ] 10 hearts above the hotbar, fill tracks damage and healing
 - [ ] 9-slot bar shows real quick-slot icons and counts; number-key selection still works
 - [ ] Toggle off restores vanilla crosshair, health bar, and hotbar
+
+## Review pass (PR #10)
+
+Post-blitz audit of M1-M6 against the pinned build IL. Fixed: content prefabs built inactive (ZNetView/ItemDrop/Piece Awake needs a live world) and activated at spawn; item prefabs gain a persistent ZNetView; Steve/block materials reuse the primitives' own shaders (Shader.Find chains removed); m_destroyed is marked only after the destroy goes through; adjacency radius 0.25 -> 0.6 m; Steve swim falls back to Walk; camera guards on Aim/WishDirection; Jotunn failure degrades instead of killing the plugin. Verified no-change: HitType.Fall = 3, SteveController yaw-only facing, no competing velocity writer in the character update path. Details in the PR. All in-game checklists above still stand.

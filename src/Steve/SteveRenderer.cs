@@ -29,13 +29,27 @@ namespace Mineheim
             return pivot;
         }
 
+        private static Material _skinMat;
+        private static Material _shirtMat;
+        private static Material _pantsMat;
+        private static Material _faceMat;
+        private static Texture2D _faceTex;
+
         public static Material Flat(Color32 color)
         {
-            // TODO(spec): confirm which shader survives Valheim's pipeline across GPUs.
-            Shader shader = Shader.Find("Universal Render Pipeline/Simple Lit")
-                ?? Shader.Find("Standard")
-                ?? Shader.Find("Diffuse");
-            var mat = new Material(shader);
+            // One cached material per fixed palette color. Tints the primitive's own
+            // pipeline-valid material instead of Shader.Find, and never leaks one
+            // material per toggle.
+            if (color.Equals(Shirt)) return _shirtMat ?? (_shirtMat = Tinted(color));
+            if (color.Equals(Pants)) return _pantsMat ?? (_pantsMat = Tinted(color));
+            return _skinMat ?? (_skinMat = Tinted(Skin));
+        }
+
+        private static Material Tinted(Color32 color)
+        {
+            var tmp = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var mat = tmp.GetComponent<MeshRenderer>().material;
+            Object.Destroy(tmp);
             mat.color = color;
             return mat;
         }
@@ -50,7 +64,11 @@ namespace Mineheim
             Object.Destroy(plate.GetComponent<Collider>());
             plate.name = "FacePlate";
             plate.transform.localScale = new Vector3(0.4f, 0.25f, 0.02f);
-            var tex = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            if (_faceTex == null)
+            {
+                _faceTex = new Texture2D(16, 16, TextureFormat.RGBA32, false) { filterMode = FilterMode.Point };
+            }
+            var tex = _faceTex;
             for (int y = 0; y < 16; y++)
             {
                 for (int x = 0; x < 16; x++)
@@ -66,8 +84,12 @@ namespace Mineheim
             // Mouth.
             for (int x = 6; x <= 9; x++) { tex.SetPixel(x, 4, new Color32(120, 70, 60, 255)); }
             tex.Apply();
-            plate.GetComponent<MeshRenderer>().material = new Material(plate.GetComponent<MeshRenderer>().material.shader);
-            plate.GetComponent<MeshRenderer>().material.mainTexture = tex;
+            if (_faceMat == null)
+            {
+                _faceMat = new Material(plate.GetComponent<MeshRenderer>().material.shader);
+            }
+            _faceMat.mainTexture = tex;
+            plate.GetComponent<MeshRenderer>().material = _faceMat;
             return plate;
         }
     }

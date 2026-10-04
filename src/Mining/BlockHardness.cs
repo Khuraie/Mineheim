@@ -8,8 +8,8 @@ namespace Mineheim
     /// destroy constant), which keeps the formula literal and the break times Minecraft-like
     /// (stone with a wooden pick: 45/2 = 22 ticks ~= 1.1 s). Keys are matched against the
     /// Valheim prefab name.
-    /// TODO(spec): PROTOCOL.md pins no hardness numbers and M3b's drop table is not landed
-    /// yet; replace these fragments with the real block mapping when it is.
+    /// TODO(spec): PROTOCOL.md pins no hardness numbers; the fragments above predate the
+    /// ValheimToMinecraftDrop table (M3b) and both should converge onto one block taxonomy.
     /// </summary>
     public static class BlockHardness
     {

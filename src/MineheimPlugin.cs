@@ -37,9 +37,19 @@ namespace Mineheim
             // Subsystem wiring (PROTOCOL.md: subsystems meet at events). Drops routes break
             // events; the block registry registers M4 content through Jotunn.
             MinecraftDrops.Init();
-            BlockRegistry.Init();
             SteveManager.Init();
             MineheimHud.Init();
+            try
+            {
+                BlockRegistry.Init();
+            }
+            catch (System.Exception e)
+            {
+                // Jotunn content is optional at load: without it the M4 blocks/items are
+                // simply unavailable (drops fall back to vanilla) instead of killing the
+                // whole plugin. Movement, mining of vanilla blocks, Steve, and HUD keep working.
+                MineheimLog.Error("Block registry failed (Jotunn missing?): " + e.Message);
+            }
 
             // M1 acceptance line. Printed unfiltered so the milestone checklist always
             // sees it regardless of the configured log level.
