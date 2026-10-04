@@ -18,7 +18,7 @@ unity=6000.0.75f1
 bepinex=5.4.23.5
 harmony=bundled with BepInEx (0Harmony)
 jotunn=2.30.2
-dotnet=6.0 SDK (net6.0 target)
+dotnet=6.0 SDK (net472 plugin target; BepInEx 5.4 runs Unity Mono CLR 4.x)
 
 [dependencies]
 BepInEx=5.4.x (x64)

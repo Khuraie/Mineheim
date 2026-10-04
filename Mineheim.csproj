@@ -6,7 +6,16 @@
     reference-only and are never bundled (PROJECT.md "Legal").
   -->
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <!--
+      TODO(spec): PROJECT.md "Build" lists bin/Release/net6.0/Mineheim.dll as output, but
+      BepInEx 5.4 loads plugins into Unity Mono (CLR 4.0.30319.42000), which cannot resolve
+      System.Runtime 6.0.0.0 - a net6.0 plugin is found by the chainloader but its Awake()
+      never runs (verified against Valheim 1.0.16 build 25527674). Jotunn 2.30.2, the
+      reference modding library, targets .NETFramework 4.6.2. Following ground rule 8
+      (mirror Valheim's own modding conventions) and M1's acceptance check (the plugin must
+      load), Mineheim targets net472. Align PROJECT.md when this is reviewed.
+    -->
+    <TargetFramework>net472</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>disable</Nullable>
     <AssemblyName>Mineheim</AssemblyName>
@@ -27,6 +36,11 @@
     <BepInExDir>$(ValheimDir)\BepInEx</BepInExDir>
     <ManagedDir>$(ValheimDir)\valheim_Data\Managed</ManagedDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build-time only: .NET Framework reference assemblies (no VS targeting pack needed). -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- BepInEx 5.4.x core + bundled Harmony -->
