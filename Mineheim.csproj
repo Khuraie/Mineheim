@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Mineheim: a single BepInEx plugin (PROJECT.md "Architecture").
+    It builds against the local Valheim install; game, Unity, and library DLLs are
+    reference-only and are never bundled (PROJECT.md "Legal").
+  -->
+  <PropertyGroup>
+    <!--
+      TODO(spec): PROJECT.md "Build" lists bin/Release/net6.0/Mineheim.dll as output, but
+      BepInEx 5.4 loads plugins into Unity Mono (CLR 4.0.30319.42000), which cannot resolve
+      System.Runtime 6.0.0.0 - a net6.0 plugin is found by the chainloader but its Awake()
+      never runs (verified against Valheim 1.0.16 build 25527674). Jotunn 2.30.2, the
+      reference modding library, targets .NETFramework 4.6.2. Following ground rule 8
+      (mirror Valheim's own modding conventions) and M1's acceptance check (the plugin must
+      load), Mineheim targets net472. Align PROJECT.md when this is reviewed.
+    -->
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>Mineheim</AssemblyName>
+    <RootNamespace>Mineheim</RootNamespace>
+    <Version>0.1.0</Version>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+
+    <!--
+      Game location. Override with "dotnet build -p:ValheimDir=..." or the VALHEIM_DIR
+      environment variable. See docs/BUILD.md.
+    -->
+    <ValheimDir Condition="'$(ValheimDir)' == '' and '$(VALHEIM_DIR)' != ''">$(VALHEIM_DIR)</ValheimDir>
+    <ValheimDir Condition="'$(ValheimDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Valheim</ValheimDir>
+    <BepInExDir>$(ValheimDir)\BepInEx</BepInExDir>
+    <ManagedDir>$(ValheimDir)\valheim_Data\Managed</ManagedDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Build-time only: .NET Framework reference assemblies (no VS targeting pack needed). -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- BepInEx 5.4.x core + bundled Harmony -->
+    <Reference Include="BepInEx"><HintPath>$(BepInExDir)\core\BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(BepInExDir)\core\0Harmony.dll</HintPath><Private>false</Private></Reference>
+
+    <!-- Jotunn: content registration (used from M4a onward) -->
+    <Reference Include="Jotunn"><HintPath>$(BepInExDir)\plugins\Jotunn.dll</HintPath><Private>false</Private></Reference>
+
+    <!-- Valheim -->
+    <Reference Include="assembly_valheim"><HintPath>$(ManagedDir)\assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(ManagedDir)\assembly_utils.dll</HintPath><Private>false</Private></Reference>
+
+    <!-- Unity modules used by Mineheim code -->
+    <Reference Include="UnityEngine"><HintPath>$(ManagedDir)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(ManagedDir)\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+</Project>

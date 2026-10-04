@@ -1,0 +1,25 @@
+# Mineheim - mod metadata
+#
+# Pinned target versions (PROJECT.md "Target versions"). Bump the pin deliberately:
+# Valheim updates break Harmony patches (PROJECT.md "Known issues").
+
+[mod]
+name=Mineheim
+version=0.1.0
+guid=com.mineheim.plugin
+author=Mineheim contributors
+description=Valheim with Minecraft flavor: Minecraft movement, mining, block placing, HUD, and Steve layered on top of Valheim.
+license=MIT
+
+[targets]
+valheim.version=1.0.16
+valheim.steam_build=25527674
+unity=6000.0.75f1
+bepinex=5.4.23.5
+harmony=bundled with BepInEx (0Harmony)
+jotunn=2.30.2
+dotnet=6.0 SDK (net472 plugin target; BepInEx 5.4 runs Unity Mono CLR 4.x)
+
+[dependencies]
+BepInEx=5.4.x (x64)
+Jotunn=2.30.2
