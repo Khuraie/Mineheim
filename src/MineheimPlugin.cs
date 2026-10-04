@@ -37,6 +37,7 @@ namespace Mineheim
             // events; the block registry registers M4 content through Jotunn.
             MinecraftDrops.Init();
             BlockRegistry.Init();
+            SteveManager.Init();
 
             // M1 acceptance line. Printed unfiltered so the milestone checklist always
             // sees it regardless of the configured log level.
