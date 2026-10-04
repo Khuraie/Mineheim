@@ -15,7 +15,7 @@ Fresh world every time physics change.
 | M1 | Plugin loads | BepInEx loads Mineheim, F5 toggles mode, log works | code complete, in-game checklist pending |
 | M2a | Movement core | Walk, jump, gravity, ground detection, no clipping | code complete (PR #2), in-game checklist pending |
 | M2b | Movement polish | Sprint, air control, water, fall damage | code complete (PR #3), in-game checklist pending |
-| M3a | Mining core | Raycast, hardness, tool speed, vanilla drops | not started |
+| M3a | Mining core | Raycast, hardness, tool speed, vanilla drops | code complete (PR #4), in-game checklist pending |
 | M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | not started |
 | M4a | Block registry | One block type, place works, persists as ZDO | not started |
 | M4b | Block set | 9 starter blocks, placement validation, drops | not started |
@@ -95,3 +95,19 @@ Acceptance checklist (fresh world):
 - [ ] Air steering is weak but present; falling keeps momentum
 - [ ] Water: rise with jump, sink slowly otherwise, slower horizontal speed
 - [ ] Fall 5 m: no damage; fall 10 m: 7 damage; land in water: no damage
+
+## M3a - Mining core
+
+Branch: `m3a-mining-core` (PR #4). Code complete.
+
+- `src/Building/Aim.cs` - PROTOCOL.md Aim contract: camera-forward raycast from `Character.GetEyePoint()`, reach 4.5 m
+- `src/Mining/BlockHardness.cs` - hardness in hand-speed ticks (Minecraft hardness x 30, the destroy constant)
+- `src/Mining/ToolTiers.cs` - tool speed by equipped tier (hand 1 ... diamond 8); tier gating arrives in M3b
+- `src/Mining/MinecraftMining.cs` - hold Valheim's "Attack" to mine; `Progress += toolSpeed / hardness` per Minecraft tick, break at 1 through Valheim's Destructible pipeline (vanilla drops); fires `OnMineTick` / `OnBlockBreak` per PROTOCOL.md with `MinecraftDrop = null`
+
+Acceptance checklist (fresh world):
+
+- [ ] Hold attack on a rock within 4.5 m: progress builds and it breaks (~2 s by hand, faster with tools)
+- [ ] Breaking drops the usual Valheim loot (vanilla drops, no conversion yet)
+- [ ] Trees and ore take measurably longer than loose rock (hardness)
+- [ ] Looking away or releasing attack resets progress
