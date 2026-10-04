@@ -18,7 +18,7 @@ Fresh world every time physics change.
 | M3a | Mining core | Raycast, hardness, tool speed, vanilla drops | code complete (PR #4), in-game checklist pending |
 | M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | code complete (PR #5), in-game checklist pending |
 | M4a | Block registry | One block type, place works, persists as ZDO | code complete (PR #6), in-game checklist pending |
-| M4b | Block set | 9 starter blocks, placement validation, drops | not started |
+| M4b | Block set | 9 starter blocks, placement validation, drops | code complete (PR #7), in-game checklist pending |
 | M5 | Steve model | 3D Steve replaces player model, facing + animation | not started |
 | M6 | HUD | Crosshair, hearts, 9-slot hotbar | not started |
 
@@ -111,6 +111,21 @@ Acceptance checklist (fresh world):
 - [ ] Breaking drops the usual Valheim loot (vanilla drops, no conversion yet)
 - [ ] Trees and ore take measurably longer than loose rock (hardness)
 - [ ] Looking away or releasing attack resets progress
+
+## M4b - Block set
+
+Branch: `m4b-block-set` (PR #7). Code complete.
+
+- 9 starter blocks: stone, dirt, oak log, oak planks, copper/iron/gold/diamond ore, obsidian; 12 items (block items + dark oak log, flint, leather), all def-driven with procedural 16x16 textures, Jotunn-registered
+- `CanPlaceAt` enforces all 5 PROTOCOL.md rules (bounds, occupancy, adjacency support, player/character collision)
+- Drop loop closed: placed blocks map back to their items via the drop-table fallbacks, so mining a placed block re-drops its item
+
+Acceptance checklist (fresh world):
+
+- [ ] Place each of the 9 blocks; each snaps to the 1 m grid
+- [ ] Floating mid-air, inside-player, inside-creature placements refused
+- [ ] Re-log: all placed blocks persist
+- [ ] Mining a placed block returns its item
 
 ## M3b - Drop conversion
 
