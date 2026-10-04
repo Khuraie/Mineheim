@@ -45,6 +45,7 @@ namespace Mineheim
             root.transform.SetParent(player.transform, false);
             root.transform.localPosition = Vector3.zero;
             var c = root.AddComponent<SteveController>();
+            ResolveBaseShader(player);
 
             PlaceLimb(root.transform, SteveRenderer.Limb("LeftLeg", 0.25f, 0.75f, 0.25f, SteveRenderer.Pants), new Vector3(0.125f, 0.75f, 0f), -0.375f);
             PlaceLimb(root.transform, SteveRenderer.Limb("RightLeg", 0.25f, 0.75f, 0.25f, SteveRenderer.Pants), new Vector3(-0.125f, 0.75f, 0f), -0.375f);
@@ -82,6 +83,30 @@ namespace Mineheim
             pivot.transform.localPosition = pivotPos;
             pivot.transform.GetChild(0).localPosition = new Vector3(0f, meshOffsetY, 0f);
             return pivot.transform;
+        }
+
+        private static void ResolveBaseShader(Player player)
+        {
+            if (SteveRenderer.HasBaseShader)
+            {
+                return;
+            }
+            Material template = null;
+            var skinned = player.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (skinned != null)
+            {
+                template = skinned.sharedMaterial;
+            }
+            if (template == null)
+            {
+                var flat = player.GetComponentInChildren<MeshRenderer>(true);
+                if (flat != null)
+                {
+                    template = flat.sharedMaterial;
+                }
+            }
+            SteveRenderer.SetBaseShader(template != null ? template.shader : null);
+            MineheimLog.Debug("Steve base shader: " + (template != null ? template.shader.name : "none (primitive fallback)"));
         }
 
         public static void HideVisual(Player player)
