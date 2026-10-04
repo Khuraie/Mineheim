@@ -33,6 +33,10 @@ namespace Mineheim
         internal static void RaiseMineTick(MineTickEvent e) => OnMineTick?.Invoke(e);
 
         internal static void RaiseBlockBreak(BlockBreakEvent e) => OnBlockBreak?.Invoke(e);
+
+        public static event System.Action<PlaceBlockEvent> OnPlaceBlock;
+
+        internal static void RaisePlaceBlock(PlaceBlockEvent e) => OnPlaceBlock?.Invoke(e);
     }
 
     /// <summary>
