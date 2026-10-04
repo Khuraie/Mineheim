@@ -1,6 +1,7 @@
 using System.Reflection;
 using BepInEx;
 using HarmonyLib;
+using UnityEngine;
 
 namespace Mineheim
 {
@@ -38,6 +39,7 @@ namespace Mineheim
             MinecraftDrops.Init();
             BlockRegistry.Init();
             SteveManager.Init();
+            MineheimHud.Init();
 
             // M1 acceptance line. Printed unfiltered so the milestone checklist always
             // sees it regardless of the configured log level.
@@ -78,6 +80,33 @@ namespace Mineheim
 
             state.Toggle();
             MineheimLog.Info("Mineheim mode: " + (state.MineheimMode ? "ON" : "OFF"));
+        }
+
+        /// <summary>
+        /// M6 HUD rendering (PROTOCOL.md subsystem table: HUD renders only, reads all
+        /// subsystems). Skipped at the main menu - no local player, no Valheim HUD.
+        /// </summary>
+        private void OnGUI()
+        {
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+
+            var player = Player.m_localPlayer;
+            if (player == null)
+            {
+                return;
+            }
+
+            bool active = MineheimPlayer.IsMinecraftMode(player);
+            MineheimHud.Tick(active);
+            Crosshair.Draw(active);
+            Hotbar.Draw(active);
+            if (active)
+            {
+                Hearts.Draw(player);
+            }
         }
 
         /// <summary>

@@ -20,7 +20,7 @@ Fresh world every time physics change.
 | M4a | Block registry | One block type, place works, persists as ZDO | code complete (PR #6), in-game checklist pending |
 | M4b | Block set | 9 starter blocks, placement validation, drops | code complete (PR #7), in-game checklist pending |
 | M5 | Steve model | 3D Steve replaces player model, facing + animation | code complete (PR #8), in-game checklist pending |
-| M6 | HUD | Crosshair, hearts, 9-slot hotbar | not started |
+| M6 | HUD | Crosshair, hearts, 9-slot hotbar | code complete (PR #9), in-game checklist pending |
 
 ---
 
@@ -171,3 +171,19 @@ Acceptance checklist (fresh world):
 - [ ] Steve faces the camera direction (full 360, no flip)
 - [ ] Limbs swing while walking; arms raise for mining and attacking
 - [ ] Valheim armor hidden while Steve is active, restored on toggle-off
+
+## M6 - HUD
+
+Branch: `m6-hud` (PR #9). Code complete.
+
+- `src/HUD/Crosshair.cs` - Minecraft plus replacing Valheim's while active (DESIGN.md #18)
+- `src/HUD/Hearts.cs` - 10 Minecraft-style hearts filled by Valheim HP percentage (DESIGN.md #7, #19)
+- `src/HUD/Hotbar.cs` - Minecraft-style 9-slot bar over Valheim's 8 quick slots, slot 9 dimmed (DESIGN.md #5, #20)
+- `src/HUD/MineheimHud.cs` - HUD hub coordinating vanilla health-bar visibility; plugin `OnGUI` draws only on Repaint in-world
+
+Acceptance checklist (fresh world):
+
+- [ ] Minecraft crosshair centered while active; Valheim's restored when off
+- [ ] 10 hearts above the hotbar, fill tracks damage and healing
+- [ ] 9-slot bar shows real quick-slot icons and counts; number-key selection still works
+- [ ] Toggle off restores vanilla crosshair, health bar, and hotbar
