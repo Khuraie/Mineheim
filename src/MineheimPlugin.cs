@@ -33,6 +33,11 @@ namespace Mineheim
             _harmony = new Harmony(PluginGuid);
             _harmony.PatchAll(Assembly.GetExecutingAssembly());
 
+            // Subsystem wiring (PROTOCOL.md: subsystems meet at events). Drops routes break
+            // events; the block registry registers M4 content through Jotunn.
+            MinecraftDrops.Init();
+            BlockRegistry.Init();
+
             // M1 acceptance line. Printed unfiltered so the milestone checklist always
             // sees it regardless of the configured log level.
             Logger.LogInfo(PluginName + " v" + PluginVersion + " loaded");

@@ -17,7 +17,7 @@ Fresh world every time physics change.
 | M2b | Movement polish | Sprint, air control, water, fall damage | code complete (PR #3), in-game checklist pending |
 | M3a | Mining core | Raycast, hardness, tool speed, vanilla drops | code complete (PR #4), in-game checklist pending |
 | M3b | Drop conversion | Valheim-Minecraft drop table, tier gating | code complete (PR #5), in-game checklist pending |
-| M4a | Block registry | One block type, place works, persists as ZDO | not started |
+| M4a | Block registry | One block type, place works, persists as ZDO | code complete (PR #6), in-game checklist pending |
 | M4b | Block set | 9 starter blocks, placement validation, drops | not started |
 | M5 | Steve model | 3D Steve replaces player model, facing + animation | not started |
 | M6 | HUD | Crosshair, hearts, 9-slot hotbar | not started |
@@ -126,3 +126,18 @@ Acceptance checklist (fresh world):
 - [ ] Mine stone with hand: breaks, no drop; with a tool: drops Minecraft Stone (once M4 items exist)
 - [ ] Mine an unmapped destructible: vanilla Valheim drop
 - [ ] Chests, altars, portals always keep vanilla behavior
+
+## M4a - Block registry
+
+Branch: `m4a-block-registry` (PR #6). Code complete.
+
+- `src/Building/BlockRegistry.cs` - Jotunn prefab/item registration, procedural 16x16 textures (DESIGN.md #13), ZNetView persistence (DESIGN.md #12), Destructible so M3 mining breaks blocks
+- `src/Building/BlockPlacement.cs` - Valheim's "Use" action, raycast, offset by normal, snap to 1 m grid, spawn via `ZNetScene.instance.GetPrefab` + `Instantiate`; fires `OnPlaceBlock` per PROTOCOL.md
+- `src/Blocks/MinecraftStoneBlock.cs` + `src/Items/MinecraftStoneItem.cs` - first block + item
+
+Acceptance checklist (fresh world):
+
+- [ ] With a Minecraft Stone item in inventory, pressing Use on terrain places a Stone Block on the 1 m grid
+- [ ] Placing consumes 1 item
+- [ ] Re-log: placed blocks persist (ZDO)
+- [ ] Mining a placed stone block drops Minecraft Stone (M3b conversion)
